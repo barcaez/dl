@@ -1,0 +1,97 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# === Step 1: Load data ===
+df = pd.read_csv("C:/DL/exp3_homeprices_banglore (3).csv")
+
+X = df['area'].values
+y = df['price'].values
+
+# Feature scaling (for faster convergence)
+X = (X - np.mean(X)) / np.std(X)
+
+# === Step 2: Define helper functions ===
+def compute_mse(X, y, w, b):
+    predictions = w * X + b
+    return np.mean((y - predictions) ** 2)
+
+# === Step 3: Batch Gradient Descent ===
+def batch_gradient_descent(X, y, lr=0.01, epochs=100):
+    w, b = 0.0, 0.0
+    n = len(X)
+    losses = []
+
+    for epoch in range(epochs):
+        y_pred = w * X + b
+        dw = (-2/n) * np.sum(X * (y - y_pred))
+        db = (-2/n) * np.sum(y - y_pred)
+
+        w -= lr * dw
+        b -= lr * db
+
+        loss = compute_mse(X, y, w, b)
+        losses.append(loss)
+
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch:03d} | Loss: {loss:.4f}")
+
+    return w, b, losses
+
+# === Step 4: Stochastic Gradient Descent ===
+def stochastic_gradient_descent(X, y, lr=0.01, epochs=100):
+    w, b = 0.0, 0.0
+    n = len(X)
+    losses = []
+
+    for epoch in range(epochs):
+        for i in range(n):
+            rand_i = np.random.randint(0, n)
+            x_i = X[rand_i]
+            y_i = y[rand_i]
+
+            y_pred = w * x_i + b
+            dw = -2 * x_i * (y_i - y_pred)
+            db = -2 * (y_i - y_pred)
+
+            w -= lr * dw
+            b -= lr * db
+
+        loss = compute_mse(X, y, w, b)
+        losses.append(loss)
+
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch:03d} | Loss: {loss:.4f}")
+
+    return w, b, losses
+
+# === Step 5: Train models ===
+print("\n--- Batch Gradient Descent ---")
+w_bgd, b_bgd, loss_bgd = batch_gradient_descent(X, y, lr=0.01, epochs=200)
+print(f"Final (BGD): w = {w_bgd:.4f}, b = {b_bgd:.4f}")
+
+print("\n--- Stochastic Gradient Descent ---")
+w_sgd, b_sgd, loss_sgd = stochastic_gradient_descent(X, y, lr=0.01, epochs=200)
+print(f"Final (SGD): w = {w_sgd:.4f}, b = {b_sgd:.4f}")
+
+# === Step 6: Plot training loss ===
+plt.figure(figsize=(8,5))
+plt.plot(loss_bgd, label='Batch Gradient Descent')
+plt.plot(loss_sgd, label='Stochastic Gradient Descent')
+plt.xlabel("Epochs")
+plt.ylabel("MSE Loss")
+plt.title("Loss vs Epochs")
+plt.legend()
+plt.show()
+
+
+plt.figure(figsize=(7,5))
+plt.scatter(X, y, color='blue', label='Data')
+plt.plot(X, w_bgd * X + b_bgd, color='red', label='BGD line')
+plt.plot(X, w_sgd * X + b_sgd, color='green', linestyle='--', label='SGD line')
+plt.xlabel("Normalized Area")
+plt.ylabel("Price")
+plt.title("Linear Regression Fit using BGD and SGD")
+plt.legend()
+plt.show()
