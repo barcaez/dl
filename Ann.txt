@@ -1,0 +1,72 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read dataset
+data = pd.read_csv("data.csv")
+print(data.head())
+
+# Plot count of diagnosis
+ax = sns.countplot(x="diagnosis", data=data, label="Count")
+B, M = data["diagnosis"].value_counts()
+print(B, "Benign")
+print(M, "Malignant")
+
+# Drop unnecessary column
+if 'Unnamed: 32' in data.columns:
+    del data['Unnamed: 32']
+
+# Separate features and target
+X = data.iloc[:, 2:].values      # features start from 3rd column
+y = data.iloc[:, 1].values       # 'diagnosis' column
+
+# Encode target variable (B=0, M=1)
+from sklearn.preprocessing import LabelEncoder
+labelencoder_y = LabelEncoder()
+y = labelencoder_y.fit_transform(y)
+
+# Split into training and testing data
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Feature scaling
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# Build ANN model
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+
+classifier = Sequential()
+classifier.add(Dense(units=16, kernel_initializer="uniform",
+                     activation="relu", input_dim=30))
+classifier.add(Dense(units=16, kernel_initializer="uniform",
+                     activation="relu"))
+classifier.add(Dense(units=1, kernel_initializer="uniform",
+                     activation="sigmoid"))
+
+# Compile ANN
+classifier.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+# Train the model
+classifier.fit(X_train, y_train, batch_size=100, epochs=150, verbose=1)
+
+# Predict results
+y_pred = classifier.predict(X_test)
+y_pred = (y_pred > 0.5)
+
+# Confusion matrix and heatmap
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_test, y_pred)
+
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
