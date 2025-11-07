@@ -1,0 +1,68 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense
+from tensorflow.keras.utils import to_categorical
+
+# -------- Step 1: Text Data --------
+text = "machine learning is fun and powerful"
+text = text.lower()
+
+# Get unique characters
+chars = sorted(list(set(text)))
+char_to_idx = {c:i for i,c in enumerate(chars)}
+idx_to_char = {i:c for i,c in enumerate(chars)}
+
+# -------- Step 2: Create Input Sequences --------
+seq_len = 5
+X_data, Y_data = [], []
+
+for i in range(len(text) - seq_len):
+    seq = text[i:i+seq_len]
+    next_char = text[i+seq_len]
+    X_data.append([char_to_idx[c] for c in seq])
+    Y_data.append(char_to_idx[next_char])
+
+X = np.array(X_data)
+Y = np.array(Y_data)
+
+# One-hot encode labels
+Y = to_categorical(Y, num_classes=len(chars))
+
+# Reshape X → (samples, time_steps, features)
+X = X.reshape((X.shape[0], seq_len, 1))
+
+# -------- Step 3: Build RNN Model --------
+model = Sequential([
+    SimpleRNN(80, activation='tanh', input_shape=(seq_len, 1)),
+    Dense(len(chars), activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy')
+print(model.summary())
+
+# -------- Step 4: Train Model --------
+history = model.fit(X, Y, epochs=80, batch_size=16, verbose=1)
+
+# -------- Step 5: Plot Training Loss --------
+plt.plot(history.history['loss'])
+plt.title("Training Loss Curve")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.show()
+
+# -------- Step 6: Generate Text --------
+def generate_text(seed, length=40):
+    result = seed
+    for _ in range(length):
+        x_input = np.array([char_to_idx[c] for c in seed]).reshape(1, seq_len, 1)
+        prediction = np.argmax(model.predict(x_input, verbose=0))
+        next_char = idx_to_char[prediction]
+        result += next_char
+        seed = seed[1:] + next_char
+    return result
+
+print("\nGenerated text:")
+print(generate_text("machi"))
+
+
