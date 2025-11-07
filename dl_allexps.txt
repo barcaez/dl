@@ -1,0 +1,420 @@
+EXPERIMENT NO.1:
+import pandas as pd
+print("pandas version",pd.__version__)
+df=pd.DataFrame({"Name":["Ayush","Chetan"],"Age":[16,20]})
+print(df)
+
+import numpy as np
+arr=np.array([1,2,3])
+print("Array+1:",arr+1)
+a=np.array([[1,2,3],[4,5,6]])
+print(a.shape)
+print(a[1,2])
+
+import sklearn
+print("Scikit-learn version:",sklearn.__version__)
+from sklearn.model_selection import train_test_split
+X=[[1],[2],[3],[4]]
+Y=[0,1,0,1]
+X_train,X_test,Y_train,Y_test=train_test_split(X,Y,test_size=0.5)
+print("Train X:",X_train)
+print("Test X:",X_test)
+
+from tensorflow import keras
+print("Keras version(from tensorflow):",keras.__version__)
+model=keras.Sequential([keras.layers.Dense(1,input_shape=(1,))])
+model.summary()
+
+import tensorflow as tf
+print("Tensorflow version:",tf.__version__)
+a=tf.constant(10)
+b=tf.constant(20)
+print("Sum",tf.add(a,b))
+
+import matplotlib
+import matplotlib.pyplot as plt
+print("Matplotlib version:",matplotlib.__version__)
+plt.plot([1,2,3],[3,2,1])
+plt.title("Simple line plot")
+plt.show()
+
+import seaborn as sns
+sns.barplot(x=["A","B","C"],y=[5,7,6])
+plt.title("Sample Bar plot")
+plt.show()
+
+EXPERIMENT NO 2:
+import numpy as np
+def act(x):
+    return 1/(1+np.exp(-x))
+
+x=np.array([[0,0,1],[0,1,1],[1,0,1],[1,1,1]])
+y=np.array([0,1,1,0]).T
+y=y.reshape(-1,1)
+input_size=x.shape[1]
+hidden_size=4
+output_size=1
+alpha=0.1
+w1=np.random.randn(input_size,hidden_size)
+w2=np.random.randn(hidden_size,output_size)
+for i in range(100000):
+    z1=np.dot(x,w1)
+    a1=act(z1)
+    z2=np.dot(a1,w2)
+    Y=act(z2)
+    delta2=(Y-y)*(Y*(1-Y))
+    delta1=np.dot(delta2,w2.T)*(a1*(1-a1))
+    w2-=alpha*np.dot(a1.T,delta2)
+    w1-=alpha*np.dot(x.T,delta1)
+
+z1=np.dot(x,w1)
+a1=act(z1)
+z2=np.dot(a1,w2)
+Y=act(z2)
+print("Output after training...")
+print(Y)
+
+EXPERIMENT NO. 3:
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# === Step 1: Load data ===
+df = pd.read_csv("C:/DL/exp3_homeprices_banglore (3).csv")
+
+X = df['area'].values
+y = df['price'].values
+
+# Feature scaling (for faster convergence)
+X = (X - np.mean(X)) / np.std(X)
+
+# === Step 2: Define helper functions ===
+def compute_mse(X, y, w, b):
+    predictions = w * X + b
+    return np.mean((y - predictions) ** 2)
+
+# === Step 3: Batch Gradient Descent ===
+def batch_gradient_descent(X, y, lr=0.01, epochs=100):
+    w, b = 0.0, 0.0
+    n = len(X)
+    losses = []
+
+    for epoch in range(epochs):
+        y_pred = w * X + b
+        dw = (-2/n) * np.sum(X * (y - y_pred))
+        db = (-2/n) * np.sum(y - y_pred)
+
+        w -= lr * dw
+        b -= lr * db
+
+        loss = compute_mse(X, y, w, b)
+        losses.append(loss)
+
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch:03d} | Loss: {loss:.4f}")
+
+    return w, b, losses
+
+# === Step 4: Stochastic Gradient Descent ===
+def stochastic_gradient_descent(X, y, lr=0.01, epochs=100):
+    w, b = 0.0, 0.0
+    n = len(X)
+    losses = []
+
+    for epoch in range(epochs):
+        for i in range(n):
+            rand_i = np.random.randint(0, n)
+            x_i = X[rand_i]
+            y_i = y[rand_i]
+
+            y_pred = w * x_i + b
+            dw = -2 * x_i * (y_i - y_pred)
+            db = -2 * (y_i - y_pred)
+
+            w -= lr * dw
+            b -= lr * db
+
+        loss = compute_mse(X, y, w, b)
+        losses.append(loss)
+
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch:03d} | Loss: {loss:.4f}")
+
+    return w, b, losses
+
+# === Step 5: Train models ===
+print("\n--- Batch Gradient Descent ---")
+w_bgd, b_bgd, loss_bgd = batch_gradient_descent(X, y, lr=0.01, epochs=200)
+print(f"Final (BGD): w = {w_bgd:.4f}, b = {b_bgd:.4f}")
+
+print("\n--- Stochastic Gradient Descent ---")
+w_sgd, b_sgd, loss_sgd = stochastic_gradient_descent(X, y, lr=0.01, epochs=200)
+print(f"Final (SGD): w = {w_sgd:.4f}, b = {b_sgd:.4f}")
+
+# === Step 6: Plot training loss ===
+plt.figure(figsize=(8,5))
+plt.plot(loss_bgd, label='Batch Gradient Descent')
+plt.plot(loss_sgd, label='Stochastic Gradient Descent')
+plt.xlabel("Epochs")
+plt.ylabel("MSE Loss")
+plt.title("Loss vs Epochs")
+plt.legend()
+plt.show()
+
+# === Step 7: Plot fitted line ===
+plt.figure(figsize=(7,5))
+plt.scatter(X, y, color='blue', label='Data')
+plt.plot(X, w_bgd * X + b_bgd, color='red', label='BGD line')
+plt.plot(X, w_sgd * X + b_sgd, color='green', linestyle='--', label='SGD line')
+plt.xlabel("Normalized Area")
+plt.ylabel("Price")
+plt.title("Linear Regression Fit using BGD and SGD")
+plt.legend()
+plt.show()
+
+EXPERIMENT NO. 4:
+# Import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read dataset
+data = pd.read_csv("data.csv")
+print(data.head())
+
+# Plot count of diagnosis
+ax = sns.countplot(x="diagnosis", data=data, label="Count")
+B, M = data["diagnosis"].value_counts()
+print(B, "Benign")
+print(M, "Malignant")
+
+# Drop unnecessary column
+if 'Unnamed: 32' in data.columns:
+    del data['Unnamed: 32']
+
+# Separate features and target
+X = data.iloc[:, 2:].values      # features start from 3rd column
+y = data.iloc[:, 1].values       # 'diagnosis' column
+
+# Encode target variable (B=0, M=1)
+from sklearn.preprocessing import LabelEncoder
+labelencoder_y = LabelEncoder()
+y = labelencoder_y.fit_transform(y)
+
+# Split into training and testing data
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Feature scaling
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# Build ANN model
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+
+classifier = Sequential()
+classifier.add(Dense(units=16, kernel_initializer="uniform",
+                     activation="relu", input_dim=30))
+classifier.add(Dense(units=16, kernel_initializer="uniform",
+                     activation="relu"))
+classifier.add(Dense(units=1, kernel_initializer="uniform",
+                     activation="sigmoid"))
+
+# Compile ANN
+classifier.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+# Train the model
+classifier.fit(X_train, y_train, batch_size=100, epochs=150, verbose=1)
+
+# Predict results
+y_pred = classifier.predict(X_test)
+y_pred = (y_pred > 0.5)
+
+# Confusion matrix and heatmap
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_test, y_pred)
+
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+EXPERIMENT NO.8:
+import tensorflow as tf
+from tensorflow import keras 
+from tensorflow.keras import datasets,layers,models
+import matplotlib.pyplot as plt
+(X_train,y_train),(X_test,y_test)=datasets.mnist.load_data()
+X_train,X_test=X_train / 255.0, X_test / 255.0
+X_train=X_train.reshape(-1,28,28,1)
+X_test=X_test.reshape(-1,28,28,1)
+model=models.Sequential([
+    layers.Conv2D(6,kernel_size=(5,5),activation='tanh',input_shape=(28,28,1),padding='same'),
+    layers.AveragePooling2D(pool_size=(2,2),strides=2),
+    layers.Conv2D(16,kernel_size=(5,5),activation='tanh'),
+    layers.AveragePooling2D(pool_size=(2,2),strides=2),
+    layers.Flatten(),
+    layers.Dense(120,activation='tanh'),
+    layers.Dense(84,activation='tanh'),
+    layers.Dense(10,activation='softmax')
+])
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+model.summary()
+history=model.fit(X_train,y_train,epochs=10,batch_size=128,validation_split=0.1)
+test_loss,test_acc=model.evaluate(X_test,y_test,verbose=2)
+print(f'\nTest accuracy:{test_acc*100:.2f}%')
+plt.plot(history.history['accuracy'],label='Training Accuracy')
+plt.plot(history.history['val_accuracy'],label='Validation Accuracy')
+plt.title('Accuracy over epochs')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+EXPERIMENT NO.10:
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.utils import to_categorical
+
+# -------- Step 1: Sample Text Data --------
+text = "machine learning is fun and powerful"
+text = text.lower()
+
+# Create character mappings
+chars = sorted(list(set(text)))
+char_to_idx = {c: i for i, c in enumerate(chars)}
+idx_to_char = {i: c for i, c in enumerate(chars)}
+
+# -------- Step 2: Prepare Sequences --------
+seq_len = 5
+X_data = []
+Y_data = []
+
+for i in range(len(text) - seq_len):
+    seq = text[i:i + seq_len]
+    next_char = text[i + seq_len]
+    X_data.append([char_to_idx[c] for c in seq])
+    Y_data.append(char_to_idx[next_char])
+
+X = np.array(X_data)
+Y = to_categorical(Y_data, num_classes=len(chars))
+
+# Reshape input to (samples, timesteps, features)
+X = X.reshape((X.shape[0], seq_len, 1))
+
+# -------- Step 3: Build LSTM Model --------
+model = Sequential([
+    LSTM(64, return_sequences=False, input_shape=(seq_len, 1)),
+    Dense(len(chars), activation='softmax')
+])
+
+model.compile(loss='categorical_crossentropy', optimizer='adam')
+print(model.summary())
+
+# -------- Step 4: Train Model --------
+history = model.fit(X, Y, epochs=40, batch_size=16, verbose=1)
+
+# -------- Step 5: Visualization (Loss Curve) --------
+plt.plot(history.history["loss"])
+plt.title("Training Loss Over Epochs")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.show()
+
+# -------- Step 6: Generate Text --------
+def generate_text(seed, length=40):
+    result = seed
+    for _ in range(length):
+        x_pred = np.array([[char_to_idx[c] for c in seed]]).reshape((1, seq_len, 1))
+        pred = np.argmax(model.predict(x_pred, verbose=0))
+        next_char = idx_to_char[pred]
+        result += next_char
+        seed = seed[1:] + next_char
+    return result
+
+print("\n--- Generated Text ---")
+print(generate_text("machi"))
+
+EXPERIMENT 12:
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense
+from tensorflow.keras.utils import to_categorical
+
+# -------- Step 1: Text Data --------
+text = "machine learning is fun and powerful"
+text = text.lower()
+
+# Get unique characters
+chars = sorted(list(set(text)))
+char_to_idx = {c:i for i,c in enumerate(chars)}
+idx_to_char = {i:c for i,c in enumerate(chars)}
+
+# -------- Step 2: Create Input Sequences --------
+seq_len = 5
+X_data, Y_data = [], []
+
+for i in range(len(text) - seq_len):
+    seq = text[i:i+seq_len]
+    next_char = text[i+seq_len]
+    X_data.append([char_to_idx[c] for c in seq])
+    Y_data.append(char_to_idx[next_char])
+
+X = np.array(X_data)
+Y = np.array(Y_data)
+
+# One-hot encode labels
+Y = to_categorical(Y, num_classes=len(chars))
+
+# Reshape X → (samples, time_steps, features)
+X = X.reshape((X.shape[0], seq_len, 1))
+
+# -------- Step 3: Build RNN Model --------
+model = Sequential([
+    SimpleRNN(80, activation='tanh', input_shape=(seq_len, 1)),
+    Dense(len(chars), activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy')
+print(model.summary())
+
+# -------- Step 4: Train Model --------
+history = model.fit(X, Y, epochs=80, batch_size=16, verbose=1)
+
+# -------- Step 5: Plot Training Loss --------
+plt.plot(history.history['loss'])
+plt.title("Training Loss Curve")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.show()
+
+# -------- Step 6: Generate Text --------
+def generate_text(seed, length=40):
+    result = seed
+    for _ in range(length):
+        x_input = np.array([char_to_idx[c] for c in seed]).reshape(1, seq_len, 1)
+        prediction = np.argmax(model.predict(x_input, verbose=0))
+        next_char = idx_to_char[prediction]
+        result += next_char
+        seed = seed[1:] + next_char
+    return result
+
+print("\nGenerated text:")
+print(generate_text("machi"))
+
+
+
