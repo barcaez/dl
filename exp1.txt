@@ -1,0 +1,43 @@
+import pandas as pd
+print("pandas version",pd.__version__)
+df=pd.DataFrame({"Name":["Ayush","Chetan"],"Age":[16,20]})
+print(df)
+
+import numpy as np
+arr=np.array([1,2,3])
+print("Array+1:",arr+1)
+a=np.array([[1,2,3],[4,5,6]])
+print(a.shape)
+print(a[1,2])
+
+import sklearn
+print("Scikit-learn version:",sklearn.__version__)
+from sklearn.model_selection import train_test_split
+X=[[1],[2],[3],[4]]
+Y=[0,1,0,1]
+X_train,X_test,Y_train,Y_test=train_test_split(X,Y,test_size=0.5)
+print("Train X:",X_train)
+print("Test X:",X_test)
+
+from tensorflow import keras
+print("Keras version(from tensorflow):",keras.__version__)
+model=keras.Sequential([keras.layers.Dense(1,input_shape=(1,))])
+model.summary()
+
+import tensorflow as tf
+print("Tensorflow version:",tf.__version__)
+a=tf.constant(10)
+b=tf.constant(20)
+print("Sum",tf.add(a,b))
+
+import matplotlib
+import matplotlib.pyplot as plt
+print("Matplotlib version:",matplotlib.__version__)
+plt.plot([1,2,3],[3,2,1])
+plt.title("Simple line plot")
+plt.show()
+
+import seaborn as sns
+sns.barplot(x=["A","B","C"],y=[5,7,6])
+plt.title("Sample Bar plot")
+plt.show()
