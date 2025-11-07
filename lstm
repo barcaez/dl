@@ -1,0 +1,64 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.utils import to_categorical
+
+# -------- Step 1: Sample Text Data --------
+text = "machine learning is fun and powerful"
+text = text.lower()
+
+# Create character mappings
+chars = sorted(list(set(text)))
+char_to_idx = {c: i for i, c in enumerate(chars)}
+idx_to_char = {i: c for i, c in enumerate(chars)}
+
+# -------- Step 2: Prepare Sequences --------
+seq_len = 5
+X_data = []
+Y_data = []
+
+for i in range(len(text) - seq_len):
+    seq = text[i:i + seq_len]
+    next_char = text[i + seq_len]
+    X_data.append([char_to_idx[c] for c in seq])
+    Y_data.append(char_to_idx[next_char])
+
+X = np.array(X_data)
+Y = to_categorical(Y_data, num_classes=len(chars))
+
+# Reshape input to (samples, timesteps, features)
+X = X.reshape((X.shape[0], seq_len, 1))
+
+# -------- Step 3: Build LSTM Model --------
+model = Sequential([
+    LSTM(64, return_sequences=False, input_shape=(seq_len, 1)),
+    Dense(len(chars), activation='softmax')
+])
+
+model.compile(loss='categorical_crossentropy', optimizer='adam')
+print(model.summary())
+
+# -------- Step 4: Train Model --------
+history = model.fit(X, Y, epochs=40, batch_size=16, verbose=1)
+
+# -------- Step 5: Visualization (Loss Curve) --------
+plt.plot(history.history["loss"])
+plt.title("Training Loss Over Epochs")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.show()
+
+# -------- Step 6: Generate Text --------
+def generate_text(seed, length=40):
+    result = seed
+    for _ in range(length):
+        x_pred = np.array([[char_to_idx[c] for c in seed]]).reshape((1, seq_len, 1))
+        pred = np.argmax(model.predict(x_pred, verbose=0))
+        next_char = idx_to_char[pred]
+        result += next_char
+        seed = seed[1:] + next_char
+    return result
+
+print("\n--- Generated Text ---")
+print(generate_text("machi"))
